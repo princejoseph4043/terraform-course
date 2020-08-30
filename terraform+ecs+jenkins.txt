@@ -1,0 +1,45 @@
+terraform + ecs + jenkins
+++++++++++++++++++++++++++++++
+
+Use terraform-course >> docker-demo-3
+
+terraform init 
+terraform plan
+terraform apply
+
+1. Jenkins will be installed and proceed on one server and ECS cluster will be created
+2. Install parameterized trigger plugin in Jenkins server
+3. create a new freestyle project > docker demo
+
+Use Git Repository URL: https://github.com/wardviaene/docker-demo
+
+Add build step >> execute shell > 
+
+docker build -t 122910936396.dkr.ecr.eu-west-1.amazonaws.com/myapp:${GIT_COMMIT} .
+aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 122910936396.dkr.ecr.eu-west-1.amazonaws.com
+docker push 122910936396.dkr.ecr.eu-west-1.amazonaws.com/myapp:${GIT_COMMIT}
+>> save
+
+( Make sure to configure aws in jenkins server,as jenkins user)
+
+
+4. Create another project > docker demo deploy
+
+Use Git Repository URL: https://github.com/wardviaene/terraform-course
+
+Enable the project is parameterized > string parameter > name > MYAPP_VERSION
+
+Add build step >> execute shell > 
+
+cd docker-demo-3
+touch mykey
+touch mykey.pub
+terraform apply -target aws_ecs_service.myapp-server -var MYAPP_SERVICE_ENABLE='1' -var MYAPP_VERSION=${MYAPP_VERSION}
+>> save
+
+5. Go to first project docker demo > configure post build action >> choose the second job > docker demo deploy >> stable
+
+add predefined parameter as > 
+
+MYAPP_VERSION=${GIT_COMMIT}
+
